@@ -1,8 +1,4 @@
-##
-
-ACCOUNT INTELLIGENCE AGENT
-
-##
+## ACCOUNT INTELLIGENCE AGENT
 
 As a sales rep I spend around 15-30 minutes researching a single company to qualify them as a prospect. These go into my notes and then ill spend 15 minutes searching my notes before I make a call to a company. Ive spent months doing this by hand. Pulling SEC fillings, FCC licence data, job postings, and new articles to identify buying signals. This agent will do it in seconds.
 
@@ -16,7 +12,6 @@ Production deployment on Railway
 
 Stack: Python · LangGraph · Claude API · pgvector · Neon Postgres · TypeScript/Express · Railway
 
-Build so far
-The agent gets the message from the user and we call the LLM with the api , its given a tool to call based on what is asked.
-It then calls the function it knows to call with the input given name and we return that to the LLM
-Finally the LLM gives it to the user
+## Status
+
+Phase 0 complete: working single-tool agent with full tool-use loop (tool call → function execution → result returned to model → final response). Hardcoded data for now — real data sources coming in Phase 2.
