@@ -92,29 +92,29 @@ def run_agent(user_query: str) -> str:
     """
     # 1. First API call — send the query
     response = client.messages.create(
-    model= MODEL,
-    max_tokens = MAX_TOKENS,
-    tools=TOOLS,
-    messages=[{"role": "user", "content": user_query}],
-)
+        model= MODEL,
+        max_tokens = MAX_TOKENS,
+        tools=TOOLS,
+        messages=[{"role": "user", "content": user_query}],
+    )
     # 2. Check if model wants to use a tool
     if response.stop_reason == "tool_use": 
         for item in response.content:
             if isinstance(item, anthropic.types.ToolUseBlock):
-                if item.name == "get_company_info":
-                    result = execute_tool(item.name, item.input)
-                    # 3. Second API call — send tool result back
-                    second_response = client.messages.create(
-                        model=MODEL,
-                        max_tokens=MAX_TOKENS,
-                        tools=TOOLS,  
-                        messages=[
-                            {"role": "user", "content": user_query}, # 1. original user question
-                            {"role": "assistant", "content": response.content}, # 2. assistant's tool_use response
-                            {"role": "user", "content":[{ "type": "tool_result", "tool_use_id": item.id, "content": json.dumps(result)}]},    # 3. tool result
-                        ]
-                    )
-                    return(second_response.content[0].text)
+                result = execute_tool(item.name, item.input)
+                # 3. Second API call — send tool result back
+                second_response = client.messages.create(
+                    model=MODEL,
+                    max_tokens=MAX_TOKENS,
+                    tools=TOOLS,  
+                    messages=[
+                        {"role": "user", "content": user_query}, # 1. original user question
+                        {"role": "assistant", "content": response.content}, # 2. assistant's tool_use response
+                        {"role": "user", "content":[{ "type": "tool_result", "tool_use_id": item.id, "content": json.dumps(result)}]},    # 3. tool result
+                    ]
+                )
+                return(second_response.content[0].text)
+    return response.content[0].text
 
 # --- Entry point ---
 if __name__ == "__main__":
