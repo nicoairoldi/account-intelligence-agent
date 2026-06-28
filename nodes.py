@@ -28,7 +28,10 @@ def research(state: AgentState) -> dict:
     returns research data: everything the tools return 
     """
     # 1. First API call — send the query
-    messages = [{"role": "user", "content": state["company_name"]}]
+    content = state["company_name"]
+    if state["analysis_focus"]:
+        content += f". Analysis focus: {state["analysis_focus"]}"
+    messages = [{"role": "user", "content": content}]
     response = client.messages.create(
         model= MODEL,
         max_tokens = MAX_TOKENS,

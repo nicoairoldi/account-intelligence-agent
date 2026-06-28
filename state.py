@@ -11,6 +11,7 @@ from typing import TypedDict, Optional
 
 class AgentState(TypedDict):
     company_name: str                   # the input query
+    analysis_focus: Optional[str]       # e.g. "focus on telecom signals only"
     research_data: Optional[dict]       # what the tools returned (the raw facts)
     fit_label: Optional[str]            # what the score node decides
     fit_rationale: Optional[str]        # why the score node decided it
