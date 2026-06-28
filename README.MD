@@ -15,3 +15,7 @@ Stack: Python · LangGraph · Claude API · pgvector · Neon Postgres · TypeScr
 ## Status
 
 Phase 0 complete: working single-tool agent with full tool-use loop (tool call → function execution → result returned to model → final response). Hardcoded data for now — real data sources coming in Phase 2.
+
+Phase 1 complete: multi-tool agent loop with structured JSON qualification brief.
+Research and synthesis deliberately separated into distinct API calls —
+Maps directly to LangGraph nodes in Phase 2.
