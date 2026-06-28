@@ -34,7 +34,38 @@ TOOLS = [
                 "required": ["company_name"],
             },
         },
+        {
+            "name": "get_news",
+            "description": "finds current and relevant news articles about the company",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "company_name": {
+                        "type": "string",
+                        "description": "name of the company",
+                    },
+                },
+                "required": ["company_name"],
+            }
+        },
+        {
+            "name": "get_job_postings",
+            "description": "finds current jobs postings from the company",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "company_name": {
+                        "type": "string",
+                        "description": "name of the company",
+                    },
+                },
+                "required": ["company_name"],
+            }
+        },
+        
     ]
+
+
 
 
 client = anthropic.Anthropic()
@@ -56,6 +87,55 @@ def get_company_info(company_name: str) -> dict:
     """
     return {"company": company_name, "industry": "Energy", "employees": 5000}
 
+def get_news(company_name: str) -> dict:
+    """
+    Returns hardcoded company data for a given company name.
+
+    Args:
+        company_name: The name of the company to look up.
+
+    Returns:
+        A object with keys: company and articles
+
+    Note:
+        Hardcoded stub — will be replaced with a real data source in Phase 2.
+    """
+    return {
+        "company" : company_name,
+        "articles": [
+            {"headline": "Evergy announces new substation builds", "date": "2026-06-01"},
+            {"headline": "Evergy to invest in 5G network", "date": "2026-04-15"}
+        ]
+    }
+
+def get_job_postings(company_name: str)-> dict:
+    """
+    Returns hardcoded company data for a given company name.
+
+    Args:
+        company_name: The name of the company to look up.
+
+    Returns:
+        A object with keys: company and articles
+
+    Note:
+        Hardcoded stub — will be replaced with a real data source in Phase 2.
+    """
+    return {
+        "company": company_name,
+        "listed_jobs": [
+            {"Position": "SCADA Engineer", "Description": " Responsible for designing, implementing, and maintaining the computer systems used to monitor and control industrial processes in real-time. "},
+            {"Position": "Telecom Engineer", "Description": " Responsible for designing, implementing, and maintaining the systems and networks that enable reliable voice, data, and video communication. "},
+        ]
+    }
+
+
+TOOL_REGISTRY = {
+    "get_company_info": get_company_info,
+    "get_news": get_news,
+    "get_job_postings": get_job_postings
+}
+
 # --- Tool dispatcher ---
 def execute_tool(tool_name: str, tool_input: dict) -> dict:
     """
@@ -71,9 +151,11 @@ def execute_tool(tool_name: str, tool_input: dict) -> dict:
     Raises:
         ValueError: If tool_name does not match any known tool.
     """
-    if tool_name == "get_company_info":
-        return get_company_info(tool_input["company_name"])
-    raise ValueError(f"Unknown tool: {tool_name}")
+    fn = TOOL_REGISTRY.get(tool_name)
+    if fn is None:
+        raise ValueError(f"Unknown tool: {tool_name}")
+        # **tool_input makes the dict turn into get_company_info(company_name="Evergy")
+    return fn(**tool_input)
 
 # --- Agent loop ---
 def run_agent(user_query: str) -> str:
@@ -91,32 +173,68 @@ def run_agent(user_query: str) -> str:
         The model's final response as a plain string.
     """
     # 1. First API call — send the query
+    messages = [{"role": "user", "content": user_query}]
     response = client.messages.create(
         model= MODEL,
         max_tokens = MAX_TOKENS,
         tools=TOOLS,
-        messages=[{"role": "user", "content": user_query}],
+        messages=messages,
     )
+    
+
     # 2. Check if model wants to use a tool
-    if response.stop_reason == "tool_use": 
+    while response.stop_reason != "end_turn":
+        messages.append({"role": "assistant", "content": response.content}) 
         for item in response.content:
             if isinstance(item, anthropic.types.ToolUseBlock):
                 result = execute_tool(item.name, item.input)
-                # 3. Second API call — send tool result back
-                second_response = client.messages.create(
-                    model=MODEL,
-                    max_tokens=MAX_TOKENS,
-                    tools=TOOLS,  
-                    messages=[
-                        {"role": "user", "content": user_query}, # 1. original user question
-                        {"role": "assistant", "content": response.content}, # 2. assistant's tool_use response
-                        {"role": "user", "content":[{ "type": "tool_result", "tool_use_id": item.id, "content": json.dumps(result)}]},    # 3. tool result
-                    ]
-                )
-                return(second_response.content[0].text)
-    return response.content[0].text
+                messages.append({"role": "user", "content": [{"type": "tool_result", "tool_use_id": item.id, "content": json.dumps(result)}]})
+                # 3. Second API call — send tool result back  
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=MAX_TOKENS,
+            tools=TOOLS,  
+            messages = messages
+        )
 
+    brief_response = client.messages.create(
+        model=MODEL,
+        max_tokens=MAX_TOKENS,
+        system="""You are a sales intelligence assistant. Using the research in the conversation, 
+        return a qualification brief as JSON. Be concise. 
+        Generate a qualification brief. For fit_label use 'good_fit', 'poor_fit', or 'neutral'.
+        Score based on these signals:
+        - SCADA or Telecom job postings = strong buying signal
+        - Company under 2000 employees = easier to break into
+        - New telecom network builds and substation builds = strong buying signal,  
+        Use fit_label: good_fit, poor_fit, or neutral""",
+        messages=messages,
+        output_config={
+            "format": {
+                "type": "json_schema",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "company_name": {"type": "string"},
+                        "industry": {"type": "string"},
+                        "employees": {"type": "integer"},
+                        "news_summary": {"type": "string"},
+                        "job_postings": {"type": "array"},
+                        "fit_label": {"type": "string"},
+                        "fit_rationale": {"type": "string"}
+                    },
+                    "required": ["company_name", "industry", "employees", "news_summary", "job_postings"],
+                    "additionalProperties": False
+                }
+            }
+        }
+    )
+    return json.loads(brief_response.content[0].text)
+
+    
+                
+    
 # --- Entry point ---
 if __name__ == "__main__":
-    result = run_agent("What info do we have for Evergy")
+    result = run_agent("Tell me all info do we have for Evergy")
     print(result)
