@@ -1,8 +1,10 @@
 """
 Entry point for the Account Intelligence Agent.
 
-Calls run_agent() with a company query and prints the resulting qualification brief.
-Phase 2 will replace run_agent() with a graph.invoke() call.
+Calls copioled.invoke() with a company name and optionally analysis focus  
+Invoke walks the graph: START → research → score → write → END 
+After write returns END LangGraph hands the final state back which includes our brief.
+
 
 Usage: python main.py
 """
