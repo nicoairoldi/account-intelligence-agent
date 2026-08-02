@@ -74,7 +74,7 @@ def get_company_info(company_name: str) -> dict:
     """
     return {"company": company_name, "industry": "Energy", "employees": 5000}
 
-def get_news(company_name: str) -> dict:
+def get_news(company_name: str) -> [dict]:
     """
     Returns hardcoded company data for a given company name.
 
