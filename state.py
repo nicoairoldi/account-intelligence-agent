@@ -16,4 +16,3 @@ class AgentState(TypedDict):
     fit_label: Optional[str]            # what the score node decides
     fit_rationale: Optional[str]        # why the score node decided it
     brief: Optional[dict]               # the final structured output from write
-
