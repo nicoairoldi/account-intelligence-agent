@@ -1,4 +1,11 @@
 import requests
+from dotenv import load_dotenv
+
+import os
+
+load_dotenv()
+api_key = os.environ["NEWSAPI_KEY"]
+
 
 class AuthError(Exception):
     def __init__(self, status_code):
@@ -30,7 +37,9 @@ def _call_api(company_name: str) -> list[dict]:
         ServerError: 500 response (NewsAPI upstream failure)
 
     """
-    response = requests.get(f"https://newsapi.org/v2/everything?q={company_name}")
+    url = f"https://newsapi.org/v2/everything?q={company_name}"
+    # Auth via header, not query param — keeps key out of logs.
+    response = requests.get(url, headers={'X-Api-Key': api_key})
     if response.status_code == 200:
         return response.json()["articles"]
     elif response.status_code == 401:
