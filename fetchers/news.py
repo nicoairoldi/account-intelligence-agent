@@ -1,10 +1,11 @@
 import requests
 from dotenv import load_dotenv
-
+import time
 import os
 
 load_dotenv()
 api_key = os.environ["NEWSAPI_KEY"]
+BACKOFF_SECONDS = [3, 6, 12]   # at module level
 
 
 class AuthError(Exception):
@@ -17,7 +18,7 @@ class RateLimitError(Exception):
         self.status_code = status_code
         super().__init__(f"Rate limited with status {status_code}")
 
-class RateLimitExceededError(Exception):
+class RetryExhaustedError(Exception):
     pass
 
 class ServerError(Exception):
@@ -49,3 +50,14 @@ def _call_api(company_name: str) -> list[dict]:
     elif response.status_code == 500:
         raise ServerError(status_code=500)
     
+
+
+def get_news(company_name: str) -> list[dict]:
+    for attempt in range(4):
+        try:
+            return _call_api(company_name)
+        except (RateLimitError, ServerError) as e:
+                last_error = e
+                if attempt < 3:
+                    time.sleep(BACKOFF_SECONDS[attempt])
+    raise RetryExhaustedError() from last_error
