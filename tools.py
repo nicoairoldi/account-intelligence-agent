@@ -11,6 +11,9 @@ Imported by: nodes.py
 Note: Tool implementations are stubs. Real data sources added in Phase 2, Week 5.
 """
 
+from fetchers.news import get_news
+
+
 # --- Tool definitions ---
 TOOLS = [
         {
@@ -74,26 +77,6 @@ def get_company_info(company_name: str) -> dict:
     """
     return {"company": company_name, "industry": "Energy", "employees": 5000}
 
-def get_news(company_name: str) -> [dict]:
-    """
-    Returns hardcoded company data for a given company name.
-
-    Args:
-        company_name: The name of the company to look up.
-
-    Returns:
-        A object with keys: company and articles
-
-    Note:
-        Hardcoded stub — will be replaced with a real data source in Phase 2.
-    """
-    return {
-        "company" : company_name,
-        "articles": [
-            {"headline": "Evergy announces new substation builds", "date": "2026-06-01"},
-            {"headline": "Evergy to invest in 5G network", "date": "2026-04-15"}
-        ]
-    }
 
 def get_job_postings(company_name: str)-> dict:
     """
