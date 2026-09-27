@@ -63,18 +63,22 @@ def score(state: AgentState) -> dict:
     Calls the model to evaluate fit against ICP scoring signals.
     Returns fit_label and fit_rationale only. 
     """
+    message = state["research_data"].copy()
+    chunks_text = "\n\n".join(state["retrieved_chunks"])
+    message.append({"role": "user", "content": f"Additional context from recent news:\n\n{chunks_text}"})
     brief_response = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        system="""Read the research in the conversation and return ONLY two fields: fit_label and fit_rationale.
+        system="""Read the research and the retrieved_context in the conversation and return ONLY two fields: fit_label and fit_rationale.
         Score based on these signals:
         - SCADA or Telecom job postings = strong buying signal
         - Company under 2000 employees = easier to break into
         - New telecom network builds and substation builds = strong buying signal
         fit_label must be 'good_fit', 'poor_fit', or 'neutral'.
         fit_rationale must be one sentence explaining the score.
-        Do not return any other fields""",
-        messages=state["research_data"],
+        Do not return any other fields
+        Base your analysis only on the provided research and context. If the context doesn't contain enough information, say so rather than speculating.""",
+        messages=message,
         output_config={
             "format": {
                 "type": "json_schema",
@@ -102,12 +106,15 @@ def write(state: AgentState)-> dict:
     Writes brief to state based on research_data, fit_label, and fit_rationale
     Returns the brief
     """
+    message = state["research_data"].copy()
+    chunks_text = "\n\n".join(state["retrieved_chunks"])
+    message.append({"role": "user", "content": f"Additional context from recent news:\n\n{chunks_text}"})
     response = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        system="""You are a sales brief writer. Assemble a qualification brief from the research and the pre-determined 
-        fit score. Do not re-score. Use exactly the fit_label and fit_rationale provided.""",
-        messages=state["research_data"] + [
+        system="""You are a sales brief writer. Assemble a qualification brief from the research, retrieved context and the pre-determined 
+        fit score. Do not re-score. Use exactly the fit_label and fit_rationale provided. Base your analysis only on the provided research and context. If the context doesn't contain enough information, say so rather than speculating. """,
+        messages=message + [
             {
                 "role": "user", 
                 "content": f"Fit score already determined: fit_label={state['fit_label']}, fit_rationale={state['fit_rationale']}. Assemble the final brief using this score and the research above."
