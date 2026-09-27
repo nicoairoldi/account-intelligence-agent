@@ -10,6 +10,7 @@ Usage: python main.py
 """
 
 from graph import compiled
+from pprint import pprint
 
 # --- Entry point ---
 if __name__ == "__main__":
@@ -19,9 +20,11 @@ if __name__ == "__main__":
         "company_name": company_name,
         "analysis_focus": focus if focus else None,
         "research_data": None,
+        "retrieved_chunks": None,
         "fit_label": None,
         "fit_rationale": None,
         "brief": None
     })
-    print(result["brief"])
+    pprint(result["retrieved_chunks"])
+    pprint(result["brief"])
     

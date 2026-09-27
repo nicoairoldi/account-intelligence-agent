@@ -9,5 +9,7 @@ CREATE TABLE IF NOT EXISTS chunks (
     url TEXT,
     chunk_text TEXT,
     vector vector(1536),
-    published_at DATE
+    published_at DATE,
+
+    UNIQUE (url, chunk_index)
 );

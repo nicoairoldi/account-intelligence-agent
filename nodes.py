@@ -10,6 +10,7 @@ Imported by: graph.py
 import anthropic
 from tools import TOOLS, execute_tool
 from state import AgentState
+from rag.retrieve import retrieve_chunks
 
 from dotenv import load_dotenv
 import json
@@ -134,4 +135,13 @@ def write(state: AgentState)-> dict:
     )
     return {"brief": json.loads(response.content[0].text)}
 
+def retrieve(state: AgentState) -> dict:
+    """
+    Writes the retrieved data based on the query and company name back to state
+    """
+    query = f"Latest news and financial performance of {state["company_name"]}"
+    if state["analysis_focus"]:
+        query += f". Analysis focus: {state["analysis_focus"]}"
 
+    retrieval_list = retrieve_chunks(query, state["company_name"])
+    return {"retrieved_chunks": retrieval_list}
