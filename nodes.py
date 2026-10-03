@@ -11,6 +11,7 @@ import anthropic
 from tools import TOOLS, execute_tool
 from state import AgentState
 from rag.retrieve import retrieve_chunks
+import re 
 
 from dotenv import load_dotenv
 import json
@@ -31,6 +32,30 @@ def _format_chunks(chunks: list[dict])-> str:
         to_add = f"[Source {i+1}]: {row['title']} - {row['source_name']}, {row['published_at']}\n{row['chunk_text']}"
         chunk_list.append(to_add)
     return "\n\n".join(chunk_list)
+
+def _extract_source_numbers(source_str: str) -> list[int]:
+    """
+    scan a string for every [Source #] instance and return what number it has 
+    """
+    return list(map(int, re.findall(r"\[Source (\d+)\]", source_str)))
+
+def _find_source_url(tag_numbers: list[int], chunks: list[dict]) -> dict:
+    """
+    take the tag list, find the article metadata for each tag, handle the bad tags, and group the results by URL.
+    """
+    entries_by_url = {}
+    invalid_tags = []
+    for src in tag_numbers:
+        if src > 0 and src <= 5:
+            chunk = chunks[src-1]
+            if chunk["url"] not in entries_by_url:
+                entries_by_url[chunk["url"]] = {"title": chunk["title"], "source_name": chunk["source_name"], "url": chunk["url"], "published_at": chunk["published_at"],"tags": [src]}
+            else:
+                if src not in entries_by_url[chunk["url"]]["tags"]:
+                    entries_by_url[chunk["url"]]["tags"].append(src)
+        else: 
+            invalid_tags.append(src)
+    return {"sources": list(entries_by_url.values()), "invalid_tags": invalid_tags}
 
 def research(state: AgentState) -> dict:
     """
