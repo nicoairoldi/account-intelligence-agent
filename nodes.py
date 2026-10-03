@@ -22,6 +22,16 @@ MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 1024
 client = anthropic.Anthropic()
 
+def _format_chunks(chunks: list[dict])-> str:
+    """
+    Formats the returned chunks to be a string for the model to read
+    """
+    chunk_list = []
+    for i, row in enumerate(chunks):
+        to_add = f"[Source {i+1}]: {row['title']} - {row['source_name']}, {row['published_at']}\n{row['chunk_text']}"
+        chunk_list.append(to_add)
+    return "\n\n".join(chunk_list)
+
 def research(state: AgentState) -> dict:
     """
     Reads the company name from state
@@ -64,8 +74,7 @@ def score(state: AgentState) -> dict:
     Returns fit_label and fit_rationale only. 
     """
     message = state["research_data"].copy()
-    chunks_text = "\n\n".join(state["retrieved_chunks"])
-    message.append({"role": "user", "content": f"Additional context from recent news:\n\n{chunks_text}"})
+    message.append({"role": "user", "content": _format_chunks(state["retrieved_chunks"])})
     brief_response = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
@@ -107,8 +116,7 @@ def write(state: AgentState)-> dict:
     Returns the brief
     """
     message = state["research_data"].copy()
-    chunks_text = "\n\n".join(state["retrieved_chunks"])
-    message.append({"role": "user", "content": f"Additional context from recent news:\n\n{chunks_text}"})
+    message.append({"role": "user", "content": _format_chunks(state["retrieved_chunks"])})
     response = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
@@ -152,3 +160,4 @@ def retrieve(state: AgentState) -> dict:
 
     retrieval_list = retrieve_chunks(query, state["company_name"])
     return {"retrieved_chunks": retrieval_list}
+
