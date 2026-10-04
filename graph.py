@@ -10,17 +10,19 @@ Imported by: main.py
 
 from langgraph.graph import StateGraph, START, END
 from state import AgentState
-from nodes import research, score, write
+from nodes import research, score, write, retrieve
 
 graph = StateGraph(state_schema=AgentState)
 # nodes
 graph.add_node("research", research)
+graph.add_node("retrieve", retrieve)
 graph.add_node("score", score)
 graph.add_node("write", write)
 
 # edges
 graph.add_edge(START, "research")
-graph.add_edge("research", "score")
+graph.add_edge("research", "retrieve")
+graph.add_edge("retrieve", "score")
 graph.add_edge("score", "write")
 graph.add_edge("write", END)
 compiled = graph.compile()
