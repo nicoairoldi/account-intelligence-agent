@@ -146,7 +146,11 @@ def write(state: AgentState)-> dict:
         model=MODEL,
         max_tokens=MAX_TOKENS,
         system="""You are a sales brief writer. Assemble a qualification brief from the research, retrieved context and the pre-determined 
-        fit score. Do not re-score. Use exactly the fit_label and fit_rationale provided. Base your analysis only on the provided research and context. If the context doesn't contain enough information, say so rather than speculating. """,
+        fit score. Do not re-score. Use exactly the fit_label and fit_rationale provided. Base your analysis only on the provided research and context. 
+        If the context doesn't contain enough information, say so rather than speculating. 
+        In news_summary, cite every factual claim with its source tag in exactly this format: [Source N], using the numbers shown on the context blocks. 
+        Only use source numbers that appear in the provided context. Use one number per tag; if a claim has multiple sources, 
+        write separate tags like [Source 1][Source 3]. Do not include URLs.""",
         messages=message + [
             {
                 "role": "user", 
@@ -173,7 +177,11 @@ def write(state: AgentState)-> dict:
             }
         }
     )
-    return {"brief": json.loads(response.content[0].text)}
+    brief = json.loads(response.content[0].text)
+    tag_numbers = _extract_source_numbers(brief["news_summary"])
+    src_urls = _find_source_url(tag_numbers, state["retrieved_chunks"])
+    brief["sources"] = src_urls["sources"]
+    return {"brief": brief, "invalid_citations":src_urls["invalid_tags"] }
 
 def retrieve(state: AgentState) -> dict:
     """

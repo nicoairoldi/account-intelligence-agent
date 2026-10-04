@@ -23,8 +23,10 @@ if __name__ == "__main__":
         "retrieved_chunks": None,
         "fit_label": None,
         "fit_rationale": None,
-        "brief": None
+        "brief": None,
+        "invalid_citations": None
     })
     pprint(result["retrieved_chunks"])
     pprint(result["brief"])
+    pprint(result["invalid_citations"])
     
