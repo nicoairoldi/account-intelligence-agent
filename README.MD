@@ -57,25 +57,49 @@ flowchart LR
 
 ```bash
 # 1. Install dependencies
-pip install -r requirements.txt   # TODO: confirm file name
+pip install -r requirements.txt   
 
 # 2. Set environment variables in .env
 ANTHROPIC_API_KEY=...
 OPENAI_API_KEY=...                # embeddings
-# TODO: NewsAPI key variable name
-# TODO: Neon connection string variable name
+NEWSAPI_KEY=...
+DATABASE_URL=...
 
-# 3. Load news into the vector store
-python -m rag.ingest              # TODO: confirm invocation
+# 3. Create the database tables
+python -m database.setup
 
-# 4. Run the agent
+# 4. Load news into the vector store
+python -m rag.ingest              
+
+# 5. Run the agent
 python main.py
 ```
 
 ## Project structure
 
 ```
-TODO: paste `tree` output, trimmed to the main files
+account-intelligence-agent/
+├── main.py                 # entry point: prompts for company, runs the graph
+├── graph.py                # LangGraph wiring: research → retrieve → score → write
+├── nodes.py                # node functions + citation helpers
+├── state.py                # AgentState definition
+├── tools.py                # tool definitions + dispatcher
+├── fetchers/
+│   └── news.py             # NewsAPI fetcher: exception taxonomy, retry/backoff
+├── rag/
+│   ├── chunker.py
+│   ├── embedder.py
+│   ├── store.py
+│   ├── retrieve.py
+│   └── ingest.py           # batch ingestion with dedup
+├── database/
+│   ├── connection.py
+│   ├── schema.sql
+│   └── setup.py
+├── scripts/
+│   └── news_api_t.py       # manual live check against NewsAPI
+└── tests/
+    └── test_news.py
 ```
 
 ## Roadmap
