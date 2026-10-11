@@ -3,3 +3,5 @@ __pycache__/
 .venv/
 .env
 test_chunker_t.py
+test_spec.md
+CLAUDE.md
