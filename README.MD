@@ -75,6 +75,22 @@ python -m rag.ingest
 python main.py
 ```
 
+## Running tests
+
+```bash
+python -m pytest            # full suite
+python -m pytest -v         # one line per test
+python -m pytest tests/test_news.py::TestGetNews   # a single class
+```
+
+All tests are unit tests with mocked external calls, so no API keys or network are needed.
+
+- `test_news.py`: the NewsAPI fetcher: status-code → exception mapping, and retry/backoff behavior.
+- `test_node_helpers.py`: the citation helpers: tag extraction, tag → URL resolution grouped by URL, and out-of-range tags reported as invalid instead of crashing.
+
+### Known limitation: combined citations
+If the model writes a combined citation such as `[Source 1, 3]`, `_extract_source_numbers` doesn't match it (its pattern expects one number per tag). The claim ends up uncited, and it isn't counted in `invalid_citations`. A characterization test (`test_combined_citation_silently_dropped`) pins this behavior so any future fix is deliberate.
+
 ## Project structure
 
 ```
