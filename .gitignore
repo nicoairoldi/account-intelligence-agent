@@ -4,4 +4,3 @@ __pycache__/
 .env
 test_chunker_t.py
 test_spec.md
-CLAUDE.md
