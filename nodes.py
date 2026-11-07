@@ -46,7 +46,7 @@ def _find_source_url(tag_numbers: list[int], chunks: list[dict]) -> dict:
     entries_by_url = {}
     invalid_tags = []
     for src in tag_numbers:
-        if src > 0 and src <= 5:
+        if src > 0 and src <= len(chunks):
             chunk = chunks[src-1]
             if chunk["url"] not in entries_by_url:
                 entries_by_url[chunk["url"]] = {"title": chunk["title"], "source_name": chunk["source_name"], "url": chunk["url"], "published_at": chunk["published_at"],"tags": [src]}
