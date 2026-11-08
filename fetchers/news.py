@@ -38,9 +38,10 @@ def _call_api(company_name: str) -> list[dict]:
         ServerError: 500 response (NewsAPI upstream failure)
 
     """
-    url = f"https://newsapi.org/v2/everything?q={company_name}"
+    query_dict = {"q": f'"{company_name}"', "sortBy":"relevancy","searchIn": "title,description"}
+    url = "https://newsapi.org/v2/everything"
     # Auth via header, not query param — keeps key out of logs.
-    response = requests.get(url, headers={'X-Api-Key': api_key})
+    response = requests.get(url, headers={'X-Api-Key': api_key}, params=query_dict)
     if response.status_code == 200:
         return response.json()["articles"]
     elif response.status_code == 401:
